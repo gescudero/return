@@ -10,6 +10,7 @@
 *
 ********************************************************************************************/
 
+#include "colors.h"
 #include "raylib.h"
 #include "screens.h"    // NOTE: Declares global (extern) variables and screens functions
 
@@ -18,7 +19,8 @@
 #endif
 
 #include <stdio.h>                          // Required for: printf()
-#include <stdlib.h>                         // Required for: 
+#include <stdlib.h>                         // Required for: rand() y srand()
+#include <time.h>                           // Required for: time() in random seed generator
 #include <string.h>                         // Required for:
 
 //----------------------------------------------------------------------------------
@@ -76,6 +78,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib game template");
 
     InitAudioDevice();      // Initialize audio device
+    srand(time(NULL));      // Initialize random seed 
 
     // Load global data (assets that must be available in all screens, i.e. font)
     font = LoadFont("resources/mecha.png");
@@ -110,7 +113,9 @@ int main(void)
         case LOGO: UnloadLogoScreen(); break;
         case TITLE: UnloadTitleScreen(); break;
         case OPTIONS: UnloadOptionsScreen(); break;
+        case INTRO: UnloadIntroScreen(); break;
         case GAMEPLAY: UnloadGameplayScreen(); break;
+        case TITRIS: UnloadTitrisScreen(); break;
         case ENDING: UnloadEndingScreen(); break;
         default: break;
     }
@@ -140,7 +145,9 @@ static void ChangeToScreen(int screen)
         case LOGO: UnloadLogoScreen(); break;
         case TITLE: UnloadTitleScreen(); break;
         case OPTIONS: UnloadOptionsScreen(); break;
+        case INTRO: UnloadIntroScreen(); break;
         case GAMEPLAY: UnloadGameplayScreen(); break;
+        case TITRIS: UnloadTitrisScreen(); break;
         case ENDING: UnloadEndingScreen(); break;
         default: break;
     }
@@ -151,7 +158,9 @@ static void ChangeToScreen(int screen)
         case LOGO: InitLogoScreen(); break;
         case TITLE: InitTitleScreen(); break;
         case OPTIONS: InitOptionsScreen(); break;
+        case INTRO: InitIntroScreen(); break;
         case GAMEPLAY: InitGameplayScreen(); break;
+        case TITRIS: InitTitrisScreen(); break;
         case ENDING: InitEndingScreen(); break;
         default: break;
     }
@@ -172,6 +181,7 @@ static void TransitionToScreen(int screen)
 // Update transition effect (fade-in, fade-out)
 static void UpdateTransition(void)
 {
+    LOG("UpdateTransition\n");
     if (!transFadeOut)
     {
         transAlpha += 0.05f;
@@ -188,7 +198,9 @@ static void UpdateTransition(void)
                 case LOGO: UnloadLogoScreen(); break;
                 case TITLE: UnloadTitleScreen(); break;
                 case OPTIONS: UnloadOptionsScreen(); break;
+                case INTRO: UnloadIntroScreen(); break;
                 case GAMEPLAY: UnloadGameplayScreen(); break;
+                case TITRIS: UnloadTitrisScreen(); break;
                 case ENDING: UnloadEndingScreen(); break;
                 default: break;
             }
@@ -199,7 +211,9 @@ static void UpdateTransition(void)
                 case LOGO: InitLogoScreen(); break;
                 case TITLE: InitTitleScreen(); break;
                 case OPTIONS: InitOptionsScreen(); break;
+                case INTRO: InitIntroScreen(); break;
                 case GAMEPLAY: InitGameplayScreen(); break;
+                case TITRIS: InitTitrisScreen(); break;
                 case ENDING: InitEndingScreen(); break;
                 default: break;
             }
@@ -212,6 +226,7 @@ static void UpdateTransition(void)
     }
     else  // Transition fade out logic
     {
+        DrawText("FADEOUT", 200, 150, 20, XT_DK_PURPLE);
         transAlpha -= 0.02f;
 
         if (transAlpha < -0.01f)
@@ -254,7 +269,7 @@ static void UpdateDrawFrame(void)
                 UpdateTitleScreen();
 
                 if (FinishTitleScreen() == 1) TransitionToScreen(OPTIONS);
-                else if (FinishTitleScreen() == 2) TransitionToScreen(GAMEPLAY);
+                else if (FinishTitleScreen() == 2) TransitionToScreen(INTRO);
 
             } break;
             case OPTIONS:
@@ -264,14 +279,26 @@ static void UpdateDrawFrame(void)
                 if (FinishOptionsScreen()) TransitionToScreen(TITLE);
 
             } break;
+            case INTRO:
+            {
+                UpdateIntroScreen();
+
+                if (FinishIntroScreen() == 1) TransitionToScreen(GAMEPLAY);
+            } break;
             case GAMEPLAY:
             {
                 UpdateGameplayScreen();
 
-                if (FinishGameplayScreen() == 1) TransitionToScreen(ENDING);
+                if (FinishGameplayScreen() == 1) TransitionToScreen(TITRIS);
                 //else if (FinishGameplayScreen() == 2) TransitionToScreen(TITLE);
 
             } break;
+            case TITRIS:
+            {
+                UpdateTitrisScreen();
+
+                if (FinishTitrisScreen() == 1) TransitionToScreen(ENDING);
+            }
             case ENDING:
             {
                 UpdateEndingScreen();
@@ -289,22 +316,27 @@ static void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
     BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(XT_DK_GREY);
 
         switch(currentScreen)
         {
             case LOGO: DrawLogoScreen(); break;
             case TITLE: DrawTitleScreen(); break;
             case OPTIONS: DrawOptionsScreen(); break;
+            case INTRO: DrawIntroScreen(); break;
             case GAMEPLAY: DrawGameplayScreen(); break;
+            case TITRIS: DrawTitrisScreen(); break;
             case ENDING: DrawEndingScreen(); break;
             default: break;
         }
 
         // Draw full screen rectangle in front of everything
-        if (onTransition) DrawTransition();
+        if (onTransition) 
+        {
+            DrawTransition();
+        }
 
-        //DrawFPS(10, 10);
+        // DrawFPS(10, 10);
 
     EndDrawing();
     //----------------------------------------------------------------------------------

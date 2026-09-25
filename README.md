@@ -51,7 +51,7 @@ _TODO_
 
 ### License
 
-Este proyecto se ha comenzado a desarrolar con la plantilla de raylib creada por [Ramón Santamaria](https://github.com/raysan5). La plantila está publicada con una licencia sin modificar zlib/libpng, que es una licencia OSI-certified, tipo BSD, que permite la copia, modificacion y uso incluso en proyectos cerrados.
+Este proyecto se ha comenzado a desarrollar con la plantilla de raylib creada por [Ramón Santamaria](https://github.com/raysan5). La plantila está publicada con una licencia sin modificar zlib/libpng, que es una licencia OSI-certified, tipo BSD, que permite la copia, modificacion y uso incluso en proyectos cerrados.
 
 En mis proyectos yo uso la licencia GPLv3, que también permite la copia y modificación, pero no permite crear proyectos cerrados derivados, así que si quieres usar este proyecto por alguna extraña razón, debes respetar la licencia adjunta
 
