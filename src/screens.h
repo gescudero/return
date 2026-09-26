@@ -71,13 +71,13 @@ void UnloadOptionsScreen(void);
 int FinishOptionsScreen(void);
 
 //----------------------------------------------------------------------------------
-// Gameplay Screen Functions Declaration
+// Crossing Screen Functions Declaration
 //----------------------------------------------------------------------------------
-void InitGameplayScreen(void);
-void UpdateGameplayScreen(void);
-void DrawGameplayScreen(void);
-void UnloadGameplayScreen(void);
-int FinishGameplayScreen(void);
+void InitCrossingScreen(void);
+void UpdateCrossingScreen(void);
+void DrawCrossingScreen(void);
+void UnloadCrossingScreen(void);
+int FinishCrossingScreen(void);
 
 //----------------------------------------------------------------------------------
 // Titris Screen Functions Declaration

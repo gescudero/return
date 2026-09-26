@@ -49,6 +49,8 @@ Sound fxCoin = { 0 };
 //----------------------------------------------------------------------------------
 static const int screenWidth = 800;
 static const int screenHeight = 450;
+static int seconds_to_end = 300;
+static float elapsed_time = 0.0f; 
 
 // Required variables to manage screen transitions (fade-in, fade-out)
 static float transAlpha = 0.0f;
@@ -67,7 +69,8 @@ static void UpdateTransition(void);         // Update transition effect
 static void DrawTransition(void);           // Draw transition effect (full-screen rectangle)
 
 static void UpdateDrawFrame(void);          // Update and draw one frame
-
+static void UpdateGlobalUI(void);
+static void DrawGlobalUI(void);
 //----------------------------------------------------------------------------------
 // Program main entry point
 //----------------------------------------------------------------------------------
@@ -114,7 +117,7 @@ int main(void)
         case TITLE: UnloadTitleScreen(); break;
         case OPTIONS: UnloadOptionsScreen(); break;
         case INTRO: UnloadIntroScreen(); break;
-        case GAMEPLAY: UnloadGameplayScreen(); break;
+        case GAMEPLAY: UnloadCrossingScreen(); break;
         case TITRIS: UnloadTitrisScreen(); break;
         case ENDING: UnloadEndingScreen(); break;
         default: break;
@@ -146,7 +149,7 @@ static void ChangeToScreen(int screen)
         case TITLE: UnloadTitleScreen(); break;
         case OPTIONS: UnloadOptionsScreen(); break;
         case INTRO: UnloadIntroScreen(); break;
-        case GAMEPLAY: UnloadGameplayScreen(); break;
+        case GAMEPLAY: UnloadCrossingScreen(); break;
         case TITRIS: UnloadTitrisScreen(); break;
         case ENDING: UnloadEndingScreen(); break;
         default: break;
@@ -159,7 +162,7 @@ static void ChangeToScreen(int screen)
         case TITLE: InitTitleScreen(); break;
         case OPTIONS: InitOptionsScreen(); break;
         case INTRO: InitIntroScreen(); break;
-        case GAMEPLAY: InitGameplayScreen(); break;
+        case GAMEPLAY: InitCrossingScreen(); break;
         case TITRIS: InitTitrisScreen(); break;
         case ENDING: InitEndingScreen(); break;
         default: break;
@@ -199,7 +202,7 @@ static void UpdateTransition(void)
                 case TITLE: UnloadTitleScreen(); break;
                 case OPTIONS: UnloadOptionsScreen(); break;
                 case INTRO: UnloadIntroScreen(); break;
-                case GAMEPLAY: UnloadGameplayScreen(); break;
+                case GAMEPLAY: UnloadCrossingScreen(); break;
                 case TITRIS: UnloadTitrisScreen(); break;
                 case ENDING: UnloadEndingScreen(); break;
                 default: break;
@@ -212,7 +215,7 @@ static void UpdateTransition(void)
                 case TITLE: InitTitleScreen(); break;
                 case OPTIONS: InitOptionsScreen(); break;
                 case INTRO: InitIntroScreen(); break;
-                case GAMEPLAY: InitGameplayScreen(); break;
+                case GAMEPLAY: InitCrossingScreen(); break;
                 case TITRIS: InitTitrisScreen(); break;
                 case ENDING: InitEndingScreen(); break;
                 default: break;
@@ -287,14 +290,16 @@ static void UpdateDrawFrame(void)
             } break;
             case GAMEPLAY:
             {
-                UpdateGameplayScreen();
+                UpdateGlobalUI();
+                UpdateCrossingScreen();
 
-                if (FinishGameplayScreen() == 1) TransitionToScreen(TITRIS);
-                //else if (FinishGameplayScreen() == 2) TransitionToScreen(TITLE);
+                if (FinishCrossingScreen() == 1) TransitionToScreen(TITRIS);
+                //else if (FinishCrossingScreen() == 2) TransitionToScreen(TITLE);
 
             } break;
             case TITRIS:
             {
+                UpdateGlobalUI();
                 UpdateTitrisScreen();
 
                 if (FinishTitrisScreen() == 1) TransitionToScreen(ENDING);
@@ -324,8 +329,18 @@ static void UpdateDrawFrame(void)
             case TITLE: DrawTitleScreen(); break;
             case OPTIONS: DrawOptionsScreen(); break;
             case INTRO: DrawIntroScreen(); break;
-            case GAMEPLAY: DrawGameplayScreen(); break;
-            case TITRIS: DrawTitrisScreen(); break;
+            case GAMEPLAY:
+            {
+                DrawCrossingScreen(); 
+                DrawGlobalUI();
+                break;
+            }
+            case TITRIS: 
+            {
+                DrawTitrisScreen(); 
+                DrawGlobalUI();
+                break;
+            }
             case ENDING: DrawEndingScreen(); break;
             default: break;
         }
@@ -340,4 +355,15 @@ static void UpdateDrawFrame(void)
 
     EndDrawing();
     //----------------------------------------------------------------------------------
+}
+
+
+static void UpdateGlobalUI(void) {
+    elapsed_time += GetFrameTime();
+
+    if (seconds_to_end - (int)elapsed_time <= 0) currentScreen = ENDING;
+}
+static void DrawGlobalUI(void) {
+    DrawText(TextFormat("Time to close office: %i", seconds_to_end - (int)elapsed_time), 50, 10, 20, VN_GN_YELLOW);
+
 }

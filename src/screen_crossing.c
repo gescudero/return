@@ -2,7 +2,7 @@
 *
 *   raylib - Advance Game template
 *
-*   Gameplay Screen Functions Definitions (Init, Update, Draw, Unload)
+*   Crossing Screen Functions Definitions (Init, Update, Draw, Unload)
 *
 *   Copyright (c) 2014-2022 Ramon Santamaria (@raysan5)
 *
@@ -53,6 +53,7 @@ typedef struct Player {
 
 typedef struct Obstacle {
     int id;
+    int kind; // 0:greencar; 1:redcar; 2:yellowbus
     int row;
     Vector2 position;
     Texture2D texture;
@@ -64,10 +65,10 @@ typedef struct Obstacle {
 
 Player player;
 Obstacle obstacles[NB_OBSTACLES];
-Vector2 player_start_pos = {368, 380};
+Vector2 player_start_pos = {0};
 
 //----------------------------------------------------------------------------------
-// Gameplay Screen Functions Definition
+// Crossing Screen Functions Definition
 //----------------------------------------------------------------------------------
 static void UpdatePlayer(Player *player);
 static void DrawPlayer(Player *player);
@@ -75,20 +76,16 @@ static void UpdateObstacle(Obstacle *obstacle);
 static void DrawObstacles();
 static void FixCollisionObstacles();
 
-// Gameplay Screen Initialization logic
-void InitGameplayScreen(void)
+// Crossing Screen Initialization logic
+void InitCrossingScreen(void)
 {
-    // TODO: Initialize GAMEPLAY screen variables here!
     framesCounter = 0;
     finishScreen = 0;
+    player_start_pos = (Vector2){((float)GetScreenWidth()/2)+16, 400};
     
-    // Edit image for player texture
-    Image player_img = LoadImage("../resources/DC_1974.png");
-    ImageResize(&player_img, 64, 64);
-
     player.position = player_start_pos;
     player.velocity = (Vector2){0, 0};
-    player.texture = LoadTextureFromImage(player_img);
+    player.texture = LoadTexture("./resources/titris_person2.png");
     player.lives = 3;
     player.speed = 100.0f;
     player.row = 0;
@@ -98,17 +95,34 @@ void InitGameplayScreen(void)
     srand(time(NULL));
 
     // Edit image for obstacles
-    Image obstacle_img = LoadImage("../resources/DC_1974.png");
-    ImageResize(&obstacle_img, 64, 64);
+    Texture2D texturas[3];
+    texturas[0] = LoadTexture("./resources/coche_01.png");
+    texturas[1] = LoadTexture("./resources/coche_02.png");
+    texturas[2] = LoadTexture("./resources/bus_01.png");
     for ( int i=0; i<NB_OBSTACLES; i++ )
     {
+
         obstacles[i].id = i;
-        obstacles[i].texture = LoadTextureFromImage(obstacle_img);
+        obstacles[i].kind = i%3;
+        obstacles[i].texture = texturas[obstacles[i].kind];
         obstacles[i].row = i % (NB_LANES - 2);
         obstacles[i].position = (Vector2){ GetScreenWidth(), 90 + (obstacles[i].row * 75) };
         obstacles[i].speed = 100.0f + (rand() % 30);
         obstacles[i].active = false;
-        obstacles[i].rectangle = (Rectangle){obstacles[i].position.x, obstacles[i].position.y, 96, 44};
+        switch (obstacles[i].kind) {
+            case 0:
+                obstacles[i].rectangle = (Rectangle){obstacles[i].position.x, obstacles[i].position.y, 64, 64};
+                break;
+            case 1:
+                obstacles[i].rectangle = (Rectangle){obstacles[i].position.x, obstacles[i].position.y, 64, 64};
+                break;
+            case 2:
+                obstacles[i].rectangle = (Rectangle){obstacles[i].position.x, obstacles[i].position.y, 128, 64};
+                break;
+            default:
+                obstacles[i].rectangle = (Rectangle){obstacles[i].position.x, obstacles[i].position.y, 64, 64};
+                break;
+        }
         switch (rand() % 6) {
             case 0: obstacles[i].color = VN_LT_PURPLE; break;
             case 1: obstacles[i].color = VN_GN_YELLOW; break;
@@ -119,14 +133,10 @@ void InitGameplayScreen(void)
             default: obstacles[i].color = VN_RED; break;
         } 
     }
-
-    // Unload images
-    UnloadImage(player_img);
-    UnloadImage(obstacle_img);
 }
 
-// Gameplay Screen Update logic
-void UpdateGameplayScreen(void)
+// Crossing Screen Update logic
+void UpdateCrossingScreen(void)
 {
     // TODO: Update GAMEPLAY screen variables here!
     framesCounter++;
@@ -138,19 +148,19 @@ void UpdateGameplayScreen(void)
         PlaySound(fxCoin);
     }
     // Check collision with player
-    if (IsKeyPressed(KEY_W))
+    if (IsKeyPressed(KEY_UP))
     {
         player.row++;
     }
-    if (IsKeyPressed(KEY_S))
+    if (IsKeyPressed(KEY_DOWN))
     {
         player.row--;
     }
-    if (IsKeyPressed(KEY_A))
+    if (IsKeyPressed(KEY_LEFT))
     {
         player.position.x -= 25;
     }
-    if (IsKeyPressed(KEY_D))
+    if (IsKeyPressed(KEY_RIGHT))
     {
         player.position.x += 25;
     }
@@ -187,23 +197,27 @@ void UpdateGameplayScreen(void)
     FixCollisionObstacles();
 }
 
-// Gameplay Screen Draw logic
-void DrawGameplayScreen(void)
+// Crossing Screen Draw logic
+void DrawCrossingScreen(void)
 {
     // Background color
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), VN_MAROON);
+    // lanes 
     for ( int i=0; i<8; i++ ) 
     {
         DrawRectangle(0, (int)(GetScreenHeight()/NB_LANES)*i, GetScreenWidth(), 4, VN_WHITE);
     }
+    // data 
     DrawText(TextFormat("%i", framesCounter), 10, 10, 10, VN_BLACK);
+    // player 
     DrawPlayer(&player);
+    // obstacles 
     DrawObstacles();
 
 }
 
-// Gameplay Screen Unload logic
-void UnloadGameplayScreen(void)
+// Crossing Screen Unload logic
+void UnloadCrossingScreen(void)
 {
     // TODO: Unload GAMEPLAY screen variables here!
     UnloadTexture(player.texture);
@@ -213,8 +227,8 @@ void UnloadGameplayScreen(void)
     }
 }
 
-// Gameplay Screen should finish?
-int FinishGameplayScreen(void)
+// Crossing Screen should finish?
+int FinishCrossingScreen(void)
 {
     return finishScreen;
 }
@@ -234,7 +248,8 @@ static void DrawPlayer(Player *player)
         alpha = 100.0f;
     }
     alpha = alpha/100.0f;
-    DrawRectangleRec(player->rectangle, Fade(VN_BK_WHITE, alpha));
+    // DrawRectangleRec(player->rectangle, Fade(VN_BK_WHITE, alpha));
+    DrawTextureV(player->texture, player->position, RAYWHITE);
 }
 static void UpdateObstacle(Obstacle *obstacle)
 {
@@ -256,10 +271,10 @@ static void DrawObstacles()
     {
         if (obstacles[i].active)
         {
-            // DrawTextureV(obstacles[i].texture, obstacles[i].position, GRAY);
+            DrawTextureV(obstacles[i].texture, obstacles[i].position, RAYWHITE);
             // DrawRectangleRec(obstacles[i].rectangle, obstacles[i].color);
             // pinto el rectangulo 2 pixeles mas pequeño de ancho y de alto para que no lleguen a colisionar
-            DrawRectangle(obstacles[i].rectangle.x + 1, obstacles[i].rectangle.y + 1, obstacles[i].rectangle.width - 2 , obstacles[i].rectangle.height - 2, obstacles[i].color);
+            // DrawRectangle(obstacles[i].rectangle.x + 1, obstacles[i].rectangle.y + 1, obstacles[i].rectangle.width - 2 , obstacles[i].rectangle.height - 2, obstacles[i].color);
         }
     }
 }
@@ -282,11 +297,11 @@ static void FixCollisionObstacles()
             {
                 if (obstacles[i].position.x < obstacles[j].position.x)
                 {
-                    obstacles[j].position.x = obstacles[i].position.x + obstacles[j].rectangle.width + 1;
+                    obstacles[j].position.x = obstacles[i].position.x + obstacles[i].rectangle.width + 1;
                 }
                 else 
                 {
-                    obstacles[i].position.x = obstacles[j].position.x + obstacles[i].rectangle.width + 1;
+                    obstacles[i].position.x = obstacles[j].position.x + obstacles[j].rectangle.width + 1;
                 }
             }
         }
