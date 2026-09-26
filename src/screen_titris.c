@@ -13,18 +13,20 @@
 /***
  * Variable Definitions
  */
-int grid[NB_ROWS][NB_COLS] = {0};
-queue_t piezas;
-Color colores[9] = {VN_BLACK, VN_BLUE, VN_LT_PURPLE, VN_LT_GREEN, VN_GN_YELLOW, VN_ORANGE, VN_PINK, VN_RED, VN_WHITE};
-Texture2D textures[NB_TEXTURES] = {0};
-screenpiece_t current_piece = {0};
-float time_accum = 0.0f;
-float update_interval = 0.5f;
-bool is_cleaning = false;
-int completed_col = -1;
-titris_states_t game_state = TITRIS_ACTIVE;
-float score = 0.0f;
-int total_passengers = 35;
+static int grid[NB_ROWS][NB_COLS] = {0};
+static queue_t piezas;
+static Color colores[9] = {VN_BLACK, VN_BLUE, VN_LT_PURPLE, VN_LT_GREEN, VN_GN_YELLOW, VN_ORANGE, VN_PINK, VN_RED, VN_WHITE};
+static Texture2D textures[NB_TEXTURES] = {0};
+static screenpiece_t current_piece = {0};
+static float time_accum = 0.0f;
+static float update_interval = 0.5f;
+static bool is_cleaning = false;
+static int completed_col = -1;
+static titris_states_t game_state = TITRIS_ACTIVE;
+static float score = 0.0f;
+static int total_passengers = 35;
+static int margintop = 40;
+static int marginleft = 10;
 
 /***
  * Functions declarations
@@ -69,47 +71,52 @@ void DrawTitrisScreen(void) {
     for (int col=NB_COLS-1; col>=0; col--) {
         for (int row=0; row<NB_ROWS; row++) {
             int cell_value = grid[row][col];
+            int posx = marginleft + (CELL_SIZE*col);
+            int posy = margintop + (CELL_SIZE*row);
             if (cell_value == 0) {
-                DrawRectangle(CELL_SIZE*col+1, CELL_SIZE*row+1, CELL_SIZE-1, CELL_SIZE-1, colores[cell_value]);
+                DrawRectangle(posx + 1, posy + 1, CELL_SIZE-1, CELL_SIZE-1, colores[cell_value]);
             } else {
-                DrawTexture(textures[cell_value % NB_TEXTURES], CELL_SIZE*col, CELL_SIZE*row, RAYWHITE);
+                DrawTexture(textures[cell_value % NB_TEXTURES], posx, posy, RAYWHITE);
             }
         }
     }
     // NEXT PIECES
-    for (int i=0; i<NB_PIEZAS; i++) {
-        int index = (piezas.head + i) % NB_PIEZAS;
-        const char **p = piezas.list[index].formas[3];
-        Color c = colores[piezas.list[index].color];
-        int start_posx = (450 - (100 * i)) - 2;
-        int start_posy = 300;
+    int index = piezas.head;
+    const char **p = piezas.list[index].formas[0];
+    Color c = colores[piezas.list[index].color];
+    int start_posx = marginleft + (450 - 2);
+    int start_posy = margintop + 300;
 
-        for (int row=0; row<4; row++) {
-            for (int col=0; col<4; col++) {
-                if (p[row][col] != '0') {
-                    DrawTexture(textures[piezas.list[index].color % NB_TEXTURES], start_posx + CELL_SIZE*col, start_posy + CELL_SIZE*row, RAYWHITE);
-                    DrawRectangle(start_posx + (CELL_SIZE*col+1), start_posy + (CELL_SIZE*row+1), CELL_SIZE-1, CELL_SIZE-1, c);
-                }
+    for (int row=0; row<4; row++) {
+        for (int col=0; col<4; col++) {
+            if (p[row][col] != '0') {
+                DrawTexture(textures[piezas.list[index].color % NB_TEXTURES], start_posx + CELL_SIZE*col, start_posy + CELL_SIZE*row, RAYWHITE);
             }
         }
     }
 
     // PASSENGERS
-    DrawText("Passengers Remaining:", 550, 30, 20, VN_PINK);
-    DrawText(TextFormat("%i", total_passengers), 550, 60, 30, VN_PINK);
+    DrawTextEx(small_font, TextFormat("Passengers Remaining: %i", total_passengers), (Vector2){350, 10}, small_font.baseSize, 1, VN_PINK);
 
     
     // GAME OVER
     if (game_state == TITRIS_GAME_OVER) {
-        DrawText("AUTOBUS LLENO", 50, 100, 40, VN_LT_GREEN);
-        DrawText("TENDRÁS QUE ESPERAR", 50, 150, 40, VN_LT_GREEN);
-        DrawText("AL SIGUIENTE", 50, 200, 40, VN_LT_GREEN);
+        char *text = "AUTOBUS LLENO\nTENDRAS QUE ESPERAR\nAL SIGUIENTE";
+        Vector2 pos = {50, 100};
+        Vector2 bb_text = MeasureTextEx(font, text, font.baseSize, 2);
+        DrawRectangle(pos.x - 5, pos.y - 5, bb_text.x + 10, bb_text.y + 10 , Fade(VN_BLACK, 0.9f));
+        DrawTextEx(font, text, pos, font.baseSize, 2, VN_LT_GREEN);
+        // DrawText("AUTOBUS LLENO", 50, 100, 40, VN_LT_GREEN);
+        // DrawText("TENDRÁS QUE ESPERAR", 50, 150, 40, VN_LT_GREEN);
+        // DrawText("AL SIGUIENTE", 50, 200, 40, VN_LT_GREEN);
     }
     // WIN GAME
     if (game_state == TITRIS_WIN_GAME) {
-        DrawText("HAS CONSEGUIDO", 50, 100, 40, VN_LT_GREEN);
-        DrawText("ESPACIO EN EL ", 50, 150, 40, VN_LT_GREEN);
-        DrawText("AUTOBUS...", 50, 200, 40, VN_LT_GREEN);
+        char *text = "HAS CONSEGUIDO\nESPACIO EN EL\nAUTOBUS";
+        Vector2 pos = {50, 100};
+        Vector2 bb_text = MeasureTextEx(font, text, font.baseSize, 2);
+        DrawRectangle(pos.x - 5, pos.y - 5, bb_text.x + 10, bb_text.y + 10, Fade(VN_BLACK, 0.9f));
+        DrawTextEx(font, text, pos, font.baseSize, 2, VN_LT_GREEN);
     }
 }
 void UnloadTitrisScreen(void) {

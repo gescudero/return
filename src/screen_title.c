@@ -55,18 +55,23 @@ void UpdateTitleScreen(void)
     {
         //finishScreen = 1;   // OPTIONS
         finishScreen = 2;   // GAMEPLAY
-        PlaySound(fxCoin);
+        PlaySound(fxKeys);
     }
 }
 
 // Title Screen Draw logic
 void DrawTitleScreen(void)
 {
-    // TODO: Draw TITLE screen here!
+    // Background
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), XT_DK_GREY);
-    Vector2 pos = { 20, 10 };
-    DrawTextEx(font, "RETURN TO THE KEYS", pos, font.baseSize*3.0f, 4, DARKGREEN);
-    DrawText("PRESS ENTER or TAP to JUMP to GAMEPLAY SCREEN", 120, 220, 20, DARKGREEN);
+    // Title 
+    Vector2 bb_text_title = MeasureTextEx(font, "KEYS", big_font.baseSize, 4);
+    Vector2 pos = { (int)(GetScreenWidth()/2)-(bb_text_title.x/2), 20 };
+    DrawTextEx(big_font, "KEYS", pos, big_font.baseSize, 4, DARKGREEN);
+    // Start text 
+    Vector2 bb_text_start = MeasureTextEx(font, "PRESS ENTER to START GAME", font.baseSize, 2);
+    Vector2 pos_start = {(int)(GetScreenWidth()/2)-(bb_text_start.x/2), (int)(GetScreenHeight()/2)-(bb_text_start.y/2)};
+    DrawTextEx(font, "PRESS ENTER to START GAME", pos_start, font.baseSize, 4, DARKGREEN);
 }
 
 // Title Screen Unload logic

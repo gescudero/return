@@ -36,8 +36,12 @@ typedef enum GameScreen { UNKNOWN = -1, LOGO = 0, TITLE, OPTIONS, INTRO, CROSSGA
 //----------------------------------------------------------------------------------
 extern GameScreen currentScreen;
 extern Font font;
+extern Font big_font;
+extern Font small_font;
 extern Music music;
 extern Sound fxCoin;
+extern Sound fxKeys;
+extern Sound fxHorns[3];
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -78,6 +82,15 @@ void UpdateCrossingScreen(void);
 void DrawCrossingScreen(void);
 void UnloadCrossingScreen(void);
 int FinishCrossingScreen(void);
+
+//----------------------------------------------------------------------------------
+// Fight Screen Functions Declaration
+// ---------------------------------------------------------------------------------
+void InitFightingScreen(void);
+void UpdateFightingScreen(void);
+void DrawFightingScreen(void);
+void UnloadFightingScreen(void);
+int FinishFightingScreen(void);
 
 //----------------------------------------------------------------------------------
 // Titris Screen Functions Declaration

@@ -54,8 +54,8 @@ void InitIntroScreen(void)
     dialogue_state = 0;
     panel_pos = (Vector2){80,350};
     panel_width = 0;
-    dialogues[0] = "Friday 6pm. El mejor momento de la semana ha llegado.\nHa sido una dura semana de trabajo.";
-    dialogues[1] = "Apagas el ordenador y recoges tus cosas.\nTe despides de los compañeros que quedan en la oficina";
+    dialogues[0] = "Friday 6pm. El mejor momento de la semana ha llegado.\nTienes muchas ganas de ir a casa";
+    dialogues[1] = "Apagas el ordenador y recoges tus cosas.\nTe despides de los colegas que quedan en la oficina";
     dialogues[2] = "Sales de la oficina pensando en los planes del\nfin de semana.";
     alpha = 0.0f;
 }
@@ -70,7 +70,7 @@ void UpdateIntroScreen(void)
     {
         if (dialogue_state >= 3) {
             finishScreen = 1;
-            PlaySound(fxCoin);
+            PlaySound(fxKeys);
         } else {
             alpha = 0.0f;
             framesCounter = 0;
@@ -129,11 +129,11 @@ void DrawIntroScreen(void)
                         
             DrawRectangle(panel_pos.x, panel_pos.y, panel_width, 80, Fade(XT_DK_GREY, 0.7f));
             DrawTextEx(
-                    font, 
+                    small_font, 
                     printed_text, 
                     (Vector2){ panel_pos.x + 10, panel_pos.y + 10}, 
-                    30, 
-                    3, 
+                    small_font.baseSize, 
+                    1, 
                     Fade(VN_WHITE, alpha));
             break;
     }
