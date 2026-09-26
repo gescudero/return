@@ -35,6 +35,7 @@
 
 #define NB_OBSTACLES 30
 #define NB_LANES 6
+#define NB_OBS_TYPE 7
 
 static int framesCounter = 0;
 static int finishScreen = 0;
@@ -66,6 +67,7 @@ typedef struct Obstacle {
 Player player;
 Obstacle obstacles[NB_OBSTACLES];
 Vector2 player_start_pos = {0};
+float time_since_horn = 0.0f;
 
 //----------------------------------------------------------------------------------
 // Crossing Screen Functions Definition
@@ -95,18 +97,22 @@ void InitCrossingScreen(void)
     srand(time(NULL));
 
     // Edit image for obstacles
-    Texture2D texturas[3];
+    Texture2D texturas[NB_OBS_TYPE];
     texturas[0] = LoadTexture("./resources/coche_01.png");
     texturas[1] = LoadTexture("./resources/coche_02.png");
     texturas[2] = LoadTexture("./resources/bus_01.png");
+    texturas[3] = LoadTexture("./resources/coche_02_amarillo.png");
+    texturas[4] = LoadTexture("./resources/coche_02_azul.png");
+    texturas[5] = LoadTexture("./resources/coche_01_rosa.png");
+    texturas[6] = LoadTexture("./resources/coche_01_beige.png");
     for ( int i=0; i<NB_OBSTACLES; i++ )
     {
 
         obstacles[i].id = i;
-        obstacles[i].kind = i%3;
+        obstacles[i].kind = i%NB_OBS_TYPE;
         obstacles[i].texture = texturas[obstacles[i].kind];
         obstacles[i].row = i % (NB_LANES - 2);
-        obstacles[i].position = (Vector2){ GetScreenWidth(), 90 + (obstacles[i].row * 75) };
+        obstacles[i].position = (Vector2){ GetScreenWidth() + obstacles[i].texture.width, 90 + (obstacles[i].row * 75) };
         obstacles[i].speed = 100.0f + (rand() % 30);
         obstacles[i].active = false;
         switch (obstacles[i].kind) {
@@ -145,16 +151,21 @@ void UpdateCrossingScreen(void)
     if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
     {
         finishScreen = 1;
-        PlaySound(fxCoin);
+        PlaySound(fxKeys);
     }
     // Check collision with player
     if (IsKeyPressed(KEY_UP))
     {
         player.row++;
+        if (player.row > NB_LANES -1) {
+            player.row = NB_LANES - 1;
+            finishScreen = 1;
+        } 
     }
     if (IsKeyPressed(KEY_DOWN))
     {
         player.row--;
+        if (player.row < 0) player.row = 0;
     }
     if (IsKeyPressed(KEY_LEFT))
     {
@@ -201,14 +212,13 @@ void UpdateCrossingScreen(void)
 void DrawCrossingScreen(void)
 {
     // Background color
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), VN_MAROON);
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), VN_GREEN);
     // lanes 
-    for ( int i=0; i<8; i++ ) 
+    for ( int i=1; i<5; i++ ) 
     {
+        DrawRectangle(0, (int)(GetScreenHeight()/NB_LANES)*i, GetScreenWidth(), GetScreenHeight()/NB_LANES, XT_DK_GREY);
         DrawRectangle(0, (int)(GetScreenHeight()/NB_LANES)*i, GetScreenWidth(), 4, VN_WHITE);
     }
-    // data 
-    DrawText(TextFormat("%i", framesCounter), 10, 10, 10, VN_BLACK);
     // player 
     DrawPlayer(&player);
     // obstacles 
@@ -253,14 +263,34 @@ static void DrawPlayer(Player *player)
 }
 static void UpdateObstacle(Obstacle *obstacle)
 {
-    if (obstacle->position.x > -132 )
-    {
-        obstacle->position.x -= obstacle->speed * GetFrameTime();
-    } 
-    else 
-    {
-        obstacle->position.x = GetScreenWidth();
-        obstacle->active = false;
+    switch (obstacle->row) {
+        case 0:
+        case 1:
+            if (obstacle->position.x > -132 )
+            {
+                obstacle->position.x -= obstacle->speed * GetFrameTime();
+            } 
+            else 
+            {
+                obstacle->position.x = GetScreenWidth();
+                obstacle->active = false;
+            }
+
+            break;
+        case 2:
+        case 3:
+            if (obstacle->position.x < GetScreenWidth() + obstacle->rectangle.width )
+            {
+                obstacle->position.x += obstacle->speed * GetFrameTime();
+            } 
+            else 
+            {
+                obstacle->position.x = obstacle->rectangle.width * -1;
+                obstacle->active = false;
+            }
+            break;
+        default:
+            break;
     }
     obstacle->rectangle.x = obstacle->position.x;
 
@@ -271,16 +301,21 @@ static void DrawObstacles()
     {
         if (obstacles[i].active)
         {
-            DrawTextureV(obstacles[i].texture, obstacles[i].position, RAYWHITE);
-            // DrawRectangleRec(obstacles[i].rectangle, obstacles[i].color);
-            // pinto el rectangulo 2 pixeles mas pequeño de ancho y de alto para que no lleguen a colisionar
-            // DrawRectangle(obstacles[i].rectangle.x + 1, obstacles[i].rectangle.y + 1, obstacles[i].rectangle.width - 2 , obstacles[i].rectangle.height - 2, obstacles[i].color);
+            if (obstacles[i].row < 2) {
+                DrawTextureV(obstacles[i].texture, obstacles[i].position, RAYWHITE);
+            } else {
+                Vector2 pos = obstacles[i].position;
+                pos.x += obstacles[i].texture.width;
+                pos.y += (obstacles[i].texture.height - 10);
+                DrawTextureEx(obstacles[i].texture, pos, 180, 1.0f, RAYWHITE);
+            }
         }
     }
 }
 
 static void FixCollisionObstacles()
 {
+    bool caravana = false;
     for (int i=0; i<NB_OBSTACLES; i++)
     {
         if (!obstacles[i].active)
@@ -295,6 +330,7 @@ static void FixCollisionObstacles()
             }
             if (CheckCollisionRecs(obstacles[i].rectangle, obstacles[j].rectangle))
             {
+                caravana = true;
                 if (obstacles[i].position.x < obstacles[j].position.x)
                 {
                     obstacles[j].position.x = obstacles[i].position.x + obstacles[i].rectangle.width + 1;
@@ -306,6 +342,12 @@ static void FixCollisionObstacles()
             }
         }
     }
+    time_since_horn += GetFrameTime();
+    if (caravana && time_since_horn > 2.0f) {
+        time_since_horn = 0.0f;
+        PlaySound(fxHorns[rand()%3]);
+    }
+
 }
 
 
