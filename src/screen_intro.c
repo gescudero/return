@@ -27,6 +27,7 @@
 #include "raylib.h"
 #include "screens.h"
 #include "colors.h"
+#include <string.h>
 
 //----------------------------------------------------------------------------------
 // Module Variables Definition (local)
@@ -37,7 +38,7 @@ static Texture2D bg_texture = {0};
 static int dialogue_state = 0;
 static Vector2 panel_pos = {80, 350};
 static int panel_width = 0;
-static const char *dialogues[4]; 
+static const char *dialogues[3]; 
 static float alpha = 0.0f;
 //----------------------------------------------------------------------------------
 // Intro Screen Functions Definition
@@ -53,10 +54,9 @@ void InitIntroScreen(void)
     dialogue_state = 0;
     panel_pos = (Vector2){80,350};
     panel_width = 0;
-    dialogues[0] = "Viernes 18:00. El mejor momento de la semana ha llegado.\nHa sido una dura semana de trabajo.";
-    dialogues[1] = "Apagas el ordenador y recoges tus cosas.";
-    dialogues[2] = "Tercero";
-    dialogues[3] = "Apagas el ordenador y recoges tus cosas.";
+    dialogues[0] = "Friday 6pm. El mejor momento de la semana ha llegado.\nHa sido una dura semana de trabajo.";
+    dialogues[1] = "Apagas el ordenador y recoges tus cosas.\nTe despides de los compañeros que quedan en la oficina";
+    dialogues[2] = "Sales de la oficina pensando en los planes del\nfin de semana.";
     alpha = 0.0f;
 }
 
@@ -68,11 +68,12 @@ void UpdateIntroScreen(void)
     // Press enter or tap to change to ENDING screen
     if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
     {
-        if (dialogue_state >= 4) {
+        if (dialogue_state >= 3) {
             finishScreen = 1;
             PlaySound(fxCoin);
         } else {
             alpha = 0.0f;
+            framesCounter = 0;
             dialogue_state++;
         }
     }
@@ -107,17 +108,29 @@ void DrawIntroScreen(void)
 
             DrawRectangle(panel_pos.x, panel_pos.y, panel_width, 80, Fade(XT_DK_GREY, 0.7f));
             break;
-        case 5:
+        case 4:
             // Se acabo el dialogo;
             break;
         default:
             // Animacion de show del texto 1
             alpha += 0.02;
             if (alpha >= 1.0) alpha = 1.0;
+            char printed_text[200];
+            int actual_char = framesCounter;
+            int nb_chars = strlen(dialogues[dialogue_state-1]);
+            if (actual_char>nb_chars) {
+                actual_char = nb_chars;
+            }
+            for ( int i=0; i<actual_char; i++) {
+                printed_text[i] = dialogues[dialogue_state-1][i];
+            }
+            printed_text[actual_char+1] = '\0';
+            
+                        
             DrawRectangle(panel_pos.x, panel_pos.y, panel_width, 80, Fade(XT_DK_GREY, 0.7f));
             DrawTextEx(
                     font, 
-                    dialogues[dialogue_state-1], 
+                    printed_text, 
                     (Vector2){ panel_pos.x + 10, panel_pos.y + 10}, 
                     30, 
                     3, 
@@ -125,6 +138,7 @@ void DrawIntroScreen(void)
             break;
     }
    
+    framesCounter++;
 
 }
 
