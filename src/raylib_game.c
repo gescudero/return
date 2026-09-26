@@ -41,8 +41,12 @@
 //----------------------------------------------------------------------------------
 GameScreen currentScreen = LOGO;
 Font font = { 0 };
+Font big_font = { 0 };
+Font small_font = { 0 };
 Music music = { 0 };
 Sound fxCoin = { 0 };
+Sound fxKeys = { 0 };
+Sound fxHorns[3] = {0};
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition (local to this module)
@@ -84,10 +88,14 @@ int main(void)
     srand(time(NULL));      // Initialize random seed 
 
     // Load global data (assets that must be available in all screens, i.e. font)
-    font = LoadFont("resources/mecha.png");
+    font = LoadFontEx("./resources/SauceCodeProNerdFont-SemiBold.ttf", 30, NULL, 0);
+    big_font = LoadFontEx("./resources/SauceCodeProNerdFont-SemiBold.ttf", 100, NULL, 0);
+    small_font = LoadFontEx("./resources/SauceCodeProNerdFont-SemiBold.ttf", 20, NULL, 0);
     //music = LoadMusicStream("resources/ambient.ogg"); // TODO: Load music
-    fxCoin = LoadSound("resources/coin.wav");
-
+    fxKeys = LoadSound("./resources/keys.mp3");
+    fxHorns[0] = LoadSound("./resources/car_horn_01.mp3");
+    fxHorns[1] = LoadSound("./resources/car_horn_02.mp3");
+    fxHorns[2] = LoadSound("./resources/car_horn_03.mp3");
     SetMusicVolume(music, 1.0f);
     PlayMusicStream(music);
 
@@ -117,7 +125,8 @@ int main(void)
         case TITLE: UnloadTitleScreen(); break;
         case OPTIONS: UnloadOptionsScreen(); break;
         case INTRO: UnloadIntroScreen(); break;
-        case GAMEPLAY: UnloadCrossingScreen(); break;
+        case CROSSGAME: UnloadCrossingScreen(); break;
+        case FIGHTGAME: UnloadFightingScreen(); break;
         case TITRIS: UnloadTitrisScreen(); break;
         case ENDING: UnloadEndingScreen(); break;
         default: break;
@@ -127,6 +136,10 @@ int main(void)
     UnloadFont(font);
     UnloadMusicStream(music);
     UnloadSound(fxCoin);
+    UnloadSound(fxKeys);
+    for (int i=0; i<3; i++) {
+        UnloadSound(fxHorns[i]);
+    }
 
     CloseAudioDevice();     // Close audio context
 
@@ -149,7 +162,8 @@ static void ChangeToScreen(int screen)
         case TITLE: UnloadTitleScreen(); break;
         case OPTIONS: UnloadOptionsScreen(); break;
         case INTRO: UnloadIntroScreen(); break;
-        case GAMEPLAY: UnloadCrossingScreen(); break;
+        case CROSSGAME: UnloadCrossingScreen(); break;
+        case FIGHTGAME: UnloadFightingScreen(); break;
         case TITRIS: UnloadTitrisScreen(); break;
         case ENDING: UnloadEndingScreen(); break;
         default: break;
@@ -162,7 +176,8 @@ static void ChangeToScreen(int screen)
         case TITLE: InitTitleScreen(); break;
         case OPTIONS: InitOptionsScreen(); break;
         case INTRO: InitIntroScreen(); break;
-        case GAMEPLAY: InitCrossingScreen(); break;
+        case CROSSGAME: InitCrossingScreen(); break;
+        case FIGHTGAME: InitFightingScreen(); break;
         case TITRIS: InitTitrisScreen(); break;
         case ENDING: InitEndingScreen(); break;
         default: break;
@@ -202,7 +217,8 @@ static void UpdateTransition(void)
                 case TITLE: UnloadTitleScreen(); break;
                 case OPTIONS: UnloadOptionsScreen(); break;
                 case INTRO: UnloadIntroScreen(); break;
-                case GAMEPLAY: UnloadCrossingScreen(); break;
+                case CROSSGAME: UnloadCrossingScreen(); break;
+                case FIGHTGAME: UnloadFightingScreen(); break;
                 case TITRIS: UnloadTitrisScreen(); break;
                 case ENDING: UnloadEndingScreen(); break;
                 default: break;
@@ -215,7 +231,8 @@ static void UpdateTransition(void)
                 case TITLE: InitTitleScreen(); break;
                 case OPTIONS: InitOptionsScreen(); break;
                 case INTRO: InitIntroScreen(); break;
-                case GAMEPLAY: InitCrossingScreen(); break;
+                case CROSSGAME: InitCrossingScreen(); break;
+                case FIGHTGAME: InitFightingScreen(); break;
                 case TITRIS: InitTitrisScreen(); break;
                 case ENDING: InitEndingScreen(); break;
                 default: break;
@@ -286,17 +303,27 @@ static void UpdateDrawFrame(void)
             {
                 UpdateIntroScreen();
 
-                if (FinishIntroScreen() == 1) TransitionToScreen(GAMEPLAY);
+                if (FinishIntroScreen() == 1) TransitionToScreen(CROSSGAME);
             } break;
-            case GAMEPLAY:
+            case CROSSGAME:
             {
                 UpdateGlobalUI();
                 UpdateCrossingScreen();
 
-                if (FinishCrossingScreen() == 1) TransitionToScreen(TITRIS);
+                if (FinishCrossingScreen() == 1) TransitionToScreen(FIGHTGAME);
                 //else if (FinishCrossingScreen() == 2) TransitionToScreen(TITLE);
 
             } break;
+            case FIGHTGAME:
+            {
+                UpdateGlobalUI();
+                UpdateFightingScreen();
+
+                if (FinishFightingScreen() == 1) TransitionToScreen(TITRIS);
+                //else if (FinishCrossingScreen() == 2) TransitionToScreen(TITLE);
+
+            } break;
+
             case TITRIS:
             {
                 UpdateGlobalUI();
@@ -329,12 +356,19 @@ static void UpdateDrawFrame(void)
             case TITLE: DrawTitleScreen(); break;
             case OPTIONS: DrawOptionsScreen(); break;
             case INTRO: DrawIntroScreen(); break;
-            case GAMEPLAY:
+            case CROSSGAME:
             {
                 DrawCrossingScreen(); 
                 DrawGlobalUI();
                 break;
             }
+            case FIGHTGAME:
+            {
+                DrawFightingScreen(); 
+                DrawGlobalUI();
+                break;
+            }
+
             case TITRIS: 
             {
                 DrawTitrisScreen(); 
@@ -350,9 +384,6 @@ static void UpdateDrawFrame(void)
         {
             DrawTransition();
         }
-
-        // DrawFPS(10, 10);
-
     EndDrawing();
     //----------------------------------------------------------------------------------
 }
@@ -364,6 +395,7 @@ static void UpdateGlobalUI(void) {
     if (seconds_to_end - (int)elapsed_time <= 0) currentScreen = ENDING;
 }
 static void DrawGlobalUI(void) {
-    DrawText(TextFormat("Time to close office: %i", seconds_to_end - (int)elapsed_time), 50, 10, 20, VN_GN_YELLOW);
+    Vector2 pos = {50, 10};
+    DrawTextEx(small_font, TextFormat("Time to close office: %i", seconds_to_end - (int)elapsed_time), pos, small_font.baseSize, 2, VN_GN_YELLOW);
 
 }
