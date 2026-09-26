@@ -13,7 +13,7 @@ BASE_LDFLAGS = $(PKG_CFG_LDFLAGS)
 # Flags para release
 CFLAGS = $(BASE_CFLAGS)
 LDFLAGS = $(BASE_LDFLAGS)
-TARGET = titris
+TARGET = keys
 
 SRC_DIR = src
 BUILD_DIR = build
@@ -30,7 +30,7 @@ debug: LDFLAGS = $(BASE_LDFLAGS) -static-libasan
 debug: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(BUILD_DIR)/$(TARGET) $(OBJECTS) $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)

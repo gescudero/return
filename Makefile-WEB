@@ -44,7 +44,7 @@ PROJECT_SOURCE_FILES  ?= \
     src/screen_title.c \
     src/screen_options.c \
     src/screen_intro.c \
-    src/screen_gameplay.c \
+    src/screen_crossing.c \
     src/screen_titris.c \
     src/models_titris.c \
     src/screen_ending.c
